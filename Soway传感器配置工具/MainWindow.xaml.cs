@@ -85,7 +85,7 @@ namespace Soway传感器配置工具
 
                 CommPort = new SerialPort();
                 CommPort.PortName = cb_port!.SelectedValue.ToString();
-                CommPort.BaudRate = int.Parse(cb_baud.SelectedValue.ToString()!);
+                CommPort.BaudRate = int.Parse(cb_baud!.SelectedValue.ToString()!);
                 CommPort.Open();
             }
             else
@@ -120,16 +120,19 @@ namespace Soway传感器配置工具
             }
             if (CommPort?.IsOpen == true) 
             {
-                string FindDeviceCmd = MBData_Addrs[0];
-                FindDeviceCmd += MBData_Functions[0];
-                FindDeviceCmd += MBData_Addrs[0];
-                FindDeviceCmd += "30";
-                FindDeviceCmd += "0001";
-                FindDeviceCmd = ModbusAsciiLrcHelper.GenerateCompleteAsciiCmdWithLrc(FindDeviceCmd);
-                Trace.WriteLine(FindDeviceCmd);
-               
+                for (int i = 0; i < MBData_Addrs.Length; i++)
+                {
+                    string FindDeviceCmd = MBData_Addrs[i];
+                    FindDeviceCmd += MBData_Functions[0];
+                    FindDeviceCmd += MBData_Addrs[i];
+                    FindDeviceCmd += "30";
+                    FindDeviceCmd += "0001";
+                    FindDeviceCmd = ModbusAsciiLrcHelper.GenerateCompleteAsciiCmdWithLrc(FindDeviceCmd);
+                    Trace.WriteLine("尝试发送指令:" + FindDeviceCmd);
 
 
+
+                }
             }
 
         }
