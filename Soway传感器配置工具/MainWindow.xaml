@@ -25,7 +25,7 @@
                     <ColumnDefinition/>
                 </Grid.ColumnDefinitions>
                 <Label x:Name="LT_Label" Content="{Binding Tag,RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=ContentControl}}" Grid.Column="0" Margin="0,0,0,0"/>
-                <TextBox x:Name="LT_Textbox" Text="" Grid.Column="1" Margin="0"/>
+                <TextBox x:Name="LT_Textbox" Text="" Grid.Column="1" Margin="0" TextAlignment="Center" VerticalContentAlignment="Center"/>
             </Grid>
 
         </ControlTemplate>
@@ -64,8 +64,12 @@
         </Grid>
 
         <TabControl Grid.Row="1" TabStripPlacement="Left">
-            <TabItem Header="地址与波特率"></TabItem>
-            <TabItem Header="实时数据读取"></TabItem>
+            <TabItem Header="地址与波特率">
+                <Frame x:Name="Frame_SettingPage" Source="SettingsPage.xaml" NavigationUIVisibility="Hidden"/>
+            </TabItem>
+            <TabItem Header="实时数据读取">
+                <Frame x:Name="Frame_ValuePage" Source="ValuePage.xaml" NavigationUIVisibility="Hidden"/>
+            </TabItem>
         </TabControl>
     </Grid>
 </Window>
