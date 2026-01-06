@@ -1,3 +1,4 @@
 <Solution>
-  <Project Path="Soway传感器配置工具/Soway压力油位传感器配置工具.csproj" />
+  <Project Path="Soway压力油位传感器配置工具/Soway压力油位传感器配置工具.csproj" />
+  <Project Path="航伽液位变送器配置工具/航伽液位变送器配置工具.csproj" Id="b79c8a9c-01c9-4022-af32-bd00663c4ef6" />
 </Solution>
