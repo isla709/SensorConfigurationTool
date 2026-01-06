@@ -242,6 +242,7 @@ namespace Soway传感器配置工具
                     }
 
                 }
+                currentDeviceAddr = "N/D";
                 btn_FindDevice.IsEnabled = true;
             }
 
