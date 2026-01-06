@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Soway传感器配置工具"
         mc:Ignorable="d"
-        Title="Soway传感器配置工具" Height="450" Width="800" Loaded="Window_Loaded">
+        Title="Soway压力油位传感器配置工具" Height="450" Width="800" Loaded="Window_Loaded">
     <Window.Resources>
         <ControlTemplate x:Key="LabelCombobox">
             <Grid Margin="0,0,0,3">

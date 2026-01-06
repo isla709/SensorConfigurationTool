@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace Soway传感器配置工具.Properties {
+namespace Soway压力油位传感器配置工具.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
