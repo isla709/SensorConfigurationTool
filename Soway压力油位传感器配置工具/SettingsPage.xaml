@@ -55,7 +55,7 @@
 
         </GroupBox>
 
-        <GroupBox Grid.Row="2" Header="波特率设置" Margin="0,0,0,10">
+        <GroupBox Grid.Row="2" Header="滤波模式" Margin="0,0,0,10">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>

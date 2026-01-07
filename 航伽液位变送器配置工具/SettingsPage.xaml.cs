@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Medo.IO.Hashing;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
@@ -69,53 +70,80 @@ namespace 航伽液位变送器配置工具
                 MessageBox.Show("请先搜索设备获取当前地址！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
+            if(tb_Address.Text == "")
+            {
+                MessageBox.Show("请输入目标地址！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
 
             if (mainWindow.CommPort!.IsOpen == true)
             {
-                //string TargetAddr = (AddressComboBox.SelectedValue as ComboBoxItem)!.Content.ToString()!;
-                //string DeviceCmd = mainWindow.currentDeviceAddr;
-                //DeviceCmd += mainWindow.MBData_Functions[1];
-                //DeviceCmd += mainWindow.currentDeviceAddr;
-                //DeviceCmd += "30";
-                //DeviceCmd += "0001";
-                //DeviceCmd += "02";
-                //DeviceCmd += "00";
-                //DeviceCmd += TargetAddr;
-                //string CompleteCmd = ModbusAsciiLrcHelper.GenerateCompleteAsciiCmdWithLrc(DeviceCmd);
-                //AddLog("----------------------------------------------------------------------------");
-                //AddLog("发送指令:" + CompleteCmd);
-                //mainWindow.CommPort.Write(CompleteCmd);
-                //mainWindow.waitPortRecvSignal.Reset();
-                //mainWindow.RecvPortData.Clear();
-                //await Task.Run(() =>
-                //{
-                //    mainWindow.waitPortRecvSignal.Wait(5000);
+                Crc16 crc = Crc16.GetModbus();
 
-                //});
-                //string RecvDataStr = Encoding.ASCII.GetString(mainWindow.RecvPortData.ToArray());
-                //AddLog("接收到:" + RecvDataStr);
-                //if(RecvDataStr.Length >= 13)
-                //{
-                //    string RecvLrcStr = RecvDataStr.Substring(RecvDataStr.Length - 4, 2);
-                //    string CalcLrcStr = ModbusAsciiLrcHelper.CalculateLrcToString(ModbusAsciiLrcHelper.StringToHexBytes(RecvDataStr.Substring(1, RecvDataStr.Length - 5)));
-                //    if (RecvLrcStr.Equals(CalcLrcStr, StringComparison.OrdinalIgnoreCase) == true)
-                //    {
-                //        MessageBox.Show("设置成功！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-                //        mainWindow.currentDeviceAddr = TargetAddr;
-                //    }
-                //    else
-                //    {
-                //        MessageBox.Show("设置失败，校验错误！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-                //        AddLog("接收数据校验错误!");
-                //        mainWindow.currentDeviceAddr = "请重新搜索";
-                //    }
-                //}
-                //else
-                //{
-                //    MessageBox.Show("设置失败，未收到完整数据！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-                //    AddLog("接收数据不完整!");
-                //    mainWindow.currentDeviceAddr = "请重新搜索";
-                //}
+                byte TargetAddr = 0x02;
+
+                bool parseResult = byte.TryParse(tb_Address.Text, out TargetAddr);
+                if(!parseResult || TargetAddr < 1 || TargetAddr > 247)
+                {
+                    MessageBox.Show("地址输入错误，请输入1-247之间的数字！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
+                List<byte> DeviceCmd = new List<byte>();
+
+                DeviceCmd.Add(byte.Parse(mainWindow.currentDeviceAddr));
+
+                DeviceCmd.Add(0x06);
+
+                DeviceCmd.Add(0x00);
+                DeviceCmd.Add(0x00);
+
+                DeviceCmd.Add(0x00);
+                DeviceCmd.Add(TargetAddr);
+
+                crc.Reset();
+                crc.Append(DeviceCmd.ToArray());
+                byte[] crcValue = crc.GetCurrentHash();
+
+                DeviceCmd.Add(crcValue[0]);
+                DeviceCmd.Add(crcValue[1]);
+
+                string FindDeviceCmdString = "";
+                foreach (byte b in DeviceCmd)
+                {
+                    FindDeviceCmdString += b.ToString("X2");
+                    FindDeviceCmdString += " ";
+                }
+                AddLog("----------------------------------------------------------------------------");
+                AddLog("发送指令:" + FindDeviceCmdString);
+                mainWindow.CommPort.Write(DeviceCmd.ToArray(), 0, DeviceCmd.Count);
+
+                mainWindow.waitPortRecvSignal.Reset();
+                mainWindow.RecvPortData.Clear();
+                await Task.Run(() =>
+                {
+                    mainWindow.waitPortRecvSignal.Wait(5000);
+
+                });
+
+                string RecvDataStr = "";
+                mainWindow.RecvPortData.ForEach(b =>
+                {
+                    RecvDataStr += b.ToString("X2");
+                    RecvDataStr += " ";
+                });
+                AddLog("接收到:" + RecvDataStr);
+                if (mainWindow.RecvPortData[0] == byte.Parse(mainWindow.currentDeviceAddr) && mainWindow.RecvPortData[1] == 0x06 && mainWindow.RecvPortData[5] == TargetAddr)
+                {
+                    MessageBox.Show("设置成功！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                    mainWindow.currentDeviceAddr = TargetAddr.ToString();
+                }
+                else
+                {
+                    MessageBox.Show("设置失败，设备响应错误！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                    mainWindow.currentDeviceAddr = "请重新搜索";
+                }
+
 
             }
 
@@ -123,108 +151,82 @@ namespace 航伽液位变送器配置工具
 
         private async void SetBaudButton_Click(object sender, RoutedEventArgs e)
         {
-            //if (mainWindow == null)
-            //{
-            //    return;
-            //}
-            //if (mainWindow.CommPort == null)
-            //{
-            //    return;
-            //}
-            //if (mainWindow.currentDeviceAddr == "请重新搜索" || mainWindow.currentDeviceAddr == "N/D")
-            //{
-            //    MessageBox.Show("请先搜索设备获取当前地址！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-            //    return;
-            //}
+            if (mainWindow == null)
+            {
+                return;
+            }
+            if (mainWindow.CommPort == null)
+            {
+                return;
+            }
+            if (mainWindow.currentDeviceAddr == "请重新搜索" || mainWindow.currentDeviceAddr == "N/D")
+            {
+                MessageBox.Show("请先搜索设备获取当前地址！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
 
-            //if (mainWindow.CommPort!.IsOpen == true)
-            //{
-            //    string Targetbaud = (BaudRateCombobox.SelectedValue as ComboBoxItem)!.Tag.ToString()!;
-            //    string DeviceCmd = mainWindow.currentDeviceAddr;
-            //    DeviceCmd += mainWindow.MBData_Functions[1];
-            //    DeviceCmd += mainWindow.currentDeviceAddr;
-            //    DeviceCmd += "31";
-            //    DeviceCmd += "0001";
-            //    DeviceCmd += "02";
-            //    DeviceCmd += "00";
-            //    DeviceCmd += Targetbaud;
-            //    string CompleteCmd = ModbusAsciiLrcHelper.GenerateCompleteAsciiCmdWithLrc(DeviceCmd);
-            //    AddLog("----------------------------------------------------------------------------");
-            //    AddLog("发送指令:" + CompleteCmd);
-            //    mainWindow.CommPort.Write(CompleteCmd);
-            //    mainWindow.waitPortRecvSignal.Reset();
-            //    mainWindow.RecvPortData.Clear();
-            //    await Task.Run(() =>
-            //    {
-            //        mainWindow.waitPortRecvSignal.Wait(5000);
+            if (mainWindow.CommPort!.IsOpen == true)
+            {
+                Crc16 crc = Crc16.GetModbus();
 
-            //    });
-            //    string RecvDataStr = Encoding.ASCII.GetString(mainWindow.RecvPortData.ToArray());
-            //    AddLog("接收到:" + RecvDataStr);
+                byte Targetbaud = 0x03;
 
-            //}
+                bool parseResult = byte.TryParse((BaudRateCombobox.SelectedValue as ComboBoxItem)!.Tag.ToString(), out Targetbaud);
+
+                if (!parseResult)
+                {
+                    MessageBox.Show("波特率错误", "异常错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                List<byte> DeviceCmd = new List<byte>();
+
+                DeviceCmd.Add(byte.Parse(mainWindow.currentDeviceAddr));
+
+                DeviceCmd.Add(0x06);
+
+                DeviceCmd.Add(0x00);
+                DeviceCmd.Add(0x01);
+
+                DeviceCmd.Add(0x00);
+                DeviceCmd.Add(Targetbaud);
+
+                crc.Reset();
+                crc.Append(DeviceCmd.ToArray());
+                byte[] crcValue = crc.GetCurrentHash();
+
+                DeviceCmd.Add(crcValue[0]);
+                DeviceCmd.Add(crcValue[1]);
+
+                string FindDeviceCmdString = "";
+                foreach (byte b in DeviceCmd)
+                {
+                    FindDeviceCmdString += b.ToString("X2");
+                    FindDeviceCmdString += " ";
+                }
+                AddLog("----------------------------------------------------------------------------");
+                AddLog("发送指令:" + FindDeviceCmdString);
+                mainWindow.CommPort.Write(DeviceCmd.ToArray(), 0, DeviceCmd.Count);
+
+                mainWindow.waitPortRecvSignal.Reset();
+                mainWindow.RecvPortData.Clear();
+                await Task.Run(() =>
+                {
+                    mainWindow.waitPortRecvSignal.Wait(5000);
+
+                });
+                string RecvDataStr = "";
+                mainWindow.RecvPortData.ForEach(b =>
+                {
+                    RecvDataStr += b.ToString("X2");
+                    RecvDataStr += " ";
+                });
+                AddLog("接收到:" + RecvDataStr);
+
+            }
 
 
         }
 
-        private async void SetFilteringButton_Click(object sender, RoutedEventArgs e)
-        {
-            //if (mainWindow == null)
-            //{
-            //    return;
-            //}
-            //if (mainWindow.CommPort == null)
-            //{
-            //    return;
-            //}
-            //if (mainWindow.currentDeviceAddr == "请重新搜索" || mainWindow.currentDeviceAddr == "N/D")
-            //{
-            //    MessageBox.Show("请先搜索设备获取当前地址！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-            //    return;
-            //}
-
-            //if (mainWindow.CommPort!.IsOpen == true)
-            //{
-            //    string TargetFiltering = (FilteringCombobox.SelectedValue as ComboBoxItem)!.Tag.ToString()!;
-            //    string DeviceCmd = mainWindow.currentDeviceAddr;
-            //    DeviceCmd += mainWindow.MBData_Functions[1];
-            //    DeviceCmd += mainWindow.currentDeviceAddr;
-            //    DeviceCmd += "35";
-            //    DeviceCmd += "0001";
-            //    DeviceCmd += "02";
-            //    DeviceCmd += "00";
-            //    DeviceCmd += TargetFiltering;
-            //    string CompleteCmd = ModbusAsciiLrcHelper.GenerateCompleteAsciiCmdWithLrc(DeviceCmd);
-            //    AddLog("----------------------------------------------------------------------------");
-            //    AddLog("发送指令:" + CompleteCmd);
-            //    mainWindow.CommPort.Write(CompleteCmd);
-            //    mainWindow.waitPortRecvSignal.Reset();
-            //    mainWindow.RecvPortData.Clear();
-            //    await Task.Run(() =>
-            //    {
-            //        mainWindow.waitPortRecvSignal.Wait(5000);
-
-            //    });
-            //    string RecvDataStr = Encoding.ASCII.GetString(mainWindow.RecvPortData.ToArray());
-            //    AddLog("接收到:" + RecvDataStr);
-            //    if(RecvDataStr.StartsWith(':')) 
-            //    {
-            //        string RecvAddr = RecvDataStr.Substring(1, 2);
-            //        string RecvFunction = RecvDataStr.Substring(3, 2);
-            //        string RecvMsgID = RecvDataStr.Substring(7, 2);
-            //        Trace.WriteLine($"接收到设备响应:{RecvAddr},功能码:{RecvFunction},消息ID:{RecvMsgID}");
-            //        if(RecvAddr == mainWindow.currentDeviceAddr && RecvFunction == "10" && RecvMsgID == "35") 
-            //        {
-            //            MessageBox.Show("设置成功！", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
-            //        }
-            //        else
-            //        {
-            //            MessageBox.Show("设置失败，设备响应错误！", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
-            //        }
-
-
-            //    }
-            //}
-        }
     }
 }

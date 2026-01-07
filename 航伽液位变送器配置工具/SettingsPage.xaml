@@ -12,7 +12,6 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
@@ -23,12 +22,7 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <ComboBox Grid.Column="0" x:Name="AddressComboBox" SelectedIndex="0" VerticalAlignment="Center" Margin="0,0,5,0">
-                    <ComboBoxItem>41</ComboBoxItem>
-                    <ComboBoxItem>42</ComboBoxItem>
-                    <ComboBoxItem>43</ComboBoxItem>
-                    <ComboBoxItem>44</ComboBoxItem>
-                </ComboBox>
+                <TextBox Grid.Column="0" x:Name="tb_Address" VerticalAlignment="Center" Margin="0,0,5,0"/>
 
                 <Button Grid.Column="1" x:Name="SetAddressButton" Content="设置" Width="60" Height="22" Click="SetAddressButton_Click"/>
             </Grid>
@@ -54,24 +48,6 @@
             </Grid>
 
         </GroupBox>
-
-        <GroupBox Grid.Row="2" Header="波特率设置" Margin="0,0,0,10">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <ComboBox x:Name="FilteringCombobox" SelectedIndex="0" Margin="5">
-                    <ComboBoxItem Tag="01">实时</ComboBoxItem>
-                    <ComboBoxItem Tag="02">平滑</ComboBoxItem>
-                    <ComboBoxItem Tag="03">平稳</ComboBoxItem>
-                </ComboBox>
-                <Button Grid.Column="1" x:Name="SetFilteringButton" Content="设置" Width="60" Height="22" Click="SetFilteringButton_Click"/>
-            </Grid>
-
-        </GroupBox>
-
-
 
         <Border Grid.Row="3" 
                 BorderBrush="LightGray" 

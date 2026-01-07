@@ -231,7 +231,7 @@ namespace 航伽液位变送器配置工具
 
                 Crc16 crc = Crc16.GetModbus();
                 
-                for (int i = StartAddr; i < EndAddr; i++)
+                for (int i = StartAddr; i <= EndAddr; i++)
                 {
                     List<byte> FindDeviceCmd = new List<byte>();
 
@@ -275,14 +275,22 @@ namespace 航伽液位变送器配置工具
                     RecvPortData.ForEach(b =>
                     {
                         RecvDataStr += b.ToString("X2");
+                        RecvDataStr += " ";
                     });
-
                     Trace.WriteLine("接收到:" + RecvDataStr);
-
-
-
-                    
-
+                    if (RecvPortData.Count >= 7)
+                    {
+                        byte recvAddr = RecvPortData[0];
+                        byte recvFunc = RecvPortData[1];
+                        byte recvData = RecvPortData[4];
+                        if (recvAddr == (byte)i && recvFunc == 0x03 && recvAddr == recvData)
+                        {
+                            currentDeviceAddr = i.ToString();
+                            Trace.WriteLine("找到设备，地址:" + currentDeviceAddr);
+                            btn_FindDevice.IsEnabled = true;
+                            return;
+                        }
+                    }
                 }
                 currentDeviceAddr = "N/D";
                 btn_FindDevice.IsEnabled = true;
